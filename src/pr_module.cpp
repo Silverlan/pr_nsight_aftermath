@@ -1,51 +1,45 @@
 #include "pr_module.hpp"
 #include <pragma/lua/luaapi.h>
+#include "crash_handler.hpp"
 #include <pragma/console/conout.h>
+#include <pragma/engine.h>
 #include <luainterface.hpp>
 
-extern "C"
+import util_zip;
+
+static CallbackHandle g_dumpDebugInfoHandle;
+extern "C" {
+// Called after the module has been loaded
+DLLEXPORT bool pragma_attach(std::string &outErr)
 {
-    // Called after the module has been loaded
-    DLLEXPORT bool pragma_attach(std::string &outErr)
-    {
-        // Return true to indicate that the module has been loaded successfully.
-        // If the module could not be loaded properly, return false and populate 'outErr' with a descriptive error message.
-        Con::cout<<"Custom module \"pr_nsight_aftermath\" has been loaded!"<<Con::endl;
-        return true;
-    }
+	initialize_gpu_crash_tracker();
+	g_dumpDebugInfoHandle = pragma::get_engine()->AddCallback("DumpDebugInformation", FunctionCallback<void, std::reference_wrapper<uzip::ZIPFile>>::Create([](std::reference_wrapper<uzip::ZIPFile> zipFile) {
+		auto *tracker = get_gpu_crash_tracker();
+		if(tracker == nullptr)
+			return;
+		// Give the tracker some time to collect crash dump infos
+		std::this_thread::sleep_for(std::chrono::milliseconds(250));
+		auto infos = tracker->GetCrashDumpInfos();
+		for(auto &info : infos) {
+			for(auto &filePath : {info.jsonPath, info.nvdbgPath}) {
+				auto f = filemanager::open_file<VFilePtrReal>(filePath.GetString(), filemanager::FileMode::Read | filemanager::FileMode::Binary);
+				if(f) {
+					std::vector<uint8_t> data;
+					data.resize(f->GetSize());
+					f->Read(data.data(), data.size());
+					zipFile.get().AddFile(std::string {info.jsonPath.GetFileName()}, data.data(), data.size());
+				}
+			}
+		}
+	}));
+	return true;
+}
 
-    // Called when the module is about to be unloaded
-    DLLEXPORT void pragma_detach()
-    {
-        Con::cout<<"Custom module \"pr_nsight_aftermath\" is about to be unloaded!"<<Con::endl;
-    }
-
-    // Lua bindings can be initialized here
-    DLLEXPORT void pragma_initialize_lua(Lua::Interface &lua)
-    {
-        auto &libDemo = lua.RegisterLibrary("pr_nsight_aftermath");
-        libDemo[luabind::def("print",+[]() {
-            Con::cout<<"Hello World"<<Con::endl;
-        })];
-
-        struct DemoClass
-        {
-            DemoClass() {}
-            void PrintWarning(const std::string &msg)
-            {
-                Con::cwar<<msg<<Con::endl;
-            }
-        };
-
-        auto classDef = luabind::class_<DemoClass>("DemoClass");
-        classDef.def(luabind::constructor<>());
-        classDef.def("PrintWarning",&DemoClass::PrintWarning);
-        libDemo[classDef];
-    }
-
-    // Called when the Lua state is about to be closed.
-    DLLEXPORT void pragma_terminate_lua(Lua::Interface &lua)
-    {
-        
-    }
+// Called when the module is about to be unloaded
+DLLEXPORT void pragma_detach()
+{
+	if(g_dumpDebugInfoHandle.IsValid())
+		g_dumpDebugInfoHandle.Remove();
+	release_gpu_crash_tracker();
+}
 };
