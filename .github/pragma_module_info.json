@@ -1,7 +1,6 @@
 {
     "name": "Nsight Aftermath",
     "module_name": "pr_nsight_aftermath",
-    "module_type": "client",
     "install_directory": "modules/nsight_aftermath/",
-    "release_directory": ""
+    "release_directory": "DEFAULT"
 }

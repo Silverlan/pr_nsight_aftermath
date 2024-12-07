@@ -1,7 +1,7 @@
 include(${CMAKE_SOURCE_DIR}/cmake/pr_common.cmake)
 
-set(PROJ_NAME {{ tmplr.module_name }})
-set(MODULE_TYPE {{ tmplr.module_type }})
+set(PROJ_NAME pr_nsight_aftermath)
+set(MODULE_TYPE client)
 
 pr_add_library(${PROJ_NAME} SHARED)
 
