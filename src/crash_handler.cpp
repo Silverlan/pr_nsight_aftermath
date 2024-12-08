@@ -32,19 +32,13 @@
 #include <iomanip>
 #include <string>
 #include <array>
-#pragma optimize("", off)
+#include <pragma/console/conout.h>
+
 //*********************************************************
 // GpuCrashTracker implementation
 //*********************************************************
 
-GpuCrashTracker::GpuCrashTracker(const MarkerMap &markerMap)
-    : m_initialized(false), m_mutex(), m_shaderDebugInfo(), m_markerMap(markerMap)
-#ifdef NSIGHT_ENABLE_SHADER_DATABASE
-      ,
-      m_shaderDatabase()
-#endif
-{
-}
+GpuCrashTracker::GpuCrashTracker(const MarkerMap &markerMap) : m_initialized(false), m_mutex(), m_shaderDebugInfo(), m_markerMap(markerMap), m_shaderDatabase() {}
 
 GpuCrashTracker::~GpuCrashTracker()
 {
@@ -73,7 +67,10 @@ void GpuCrashTracker::Initialize()
 	  CrashDumpDescriptionCallback,                                     // Register callback for GPU crash dump description.
 	  ResolveMarkerCallback,                                            // Register callback for resolving application-managed markers.
 	  this);                                                            // Set the GpuCrashTracker object as user data for the above callbacks.
-	AFTERMATH_CHECK_ERROR(res);
+	if(res != GFSDK_Aftermath_Result_Success) {
+		throw std::runtime_error {"Failed to enable GPU crash dumps: " + std::string {aftermath_result_to_string(res)}};
+		return;
+	}
 	m_initialized = true;
 }
 
@@ -87,10 +84,40 @@ void GpuCrashTracker::OnCrashDump(const void *pGpuCrashDump, const uint32_t gpuC
 	WriteGpuCrashDumpToFile(pGpuCrashDump, gpuCrashDumpSize);
 }
 
-std::vector<GpuCrashTracker::CrashDumpInfo> GpuCrashTracker::GetCrashDumpInfos() const
+bool GpuCrashTracker::WaitForCompletion(std::string &outErr)
+{
+	GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+	if(!GFSDK_Aftermath_SUCCEED(GFSDK_Aftermath_GetCrashDumpStatus(&status))) {
+		outErr = "Failed to get crash dump status: " + std::string {aftermath_result_to_string(status)};
+		return false;
+	}
+
+	auto tdrTerminationTimeout = std::chrono::seconds(3);
+	auto tStart = std::chrono::steady_clock::now();
+	auto tElapsed = std::chrono::milliseconds::zero();
+
+	// Loop while Aftermath crash dump data collection has not finished or
+	// the application is still processing the crash dump data.
+	while(status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed && status != GFSDK_Aftermath_CrashDump_Status_Finished && tElapsed < tdrTerminationTimeout) {
+		// Sleep a couple of milliseconds and poll the status again.
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+		auto tEnd = std::chrono::steady_clock::now();
+		tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+	}
+
+	if(status == GFSDK_Aftermath_CrashDump_Status_Finished)
+		return true;
+
+	outErr = "Crash dump collection failed: " + std::string {aftermath_result_to_string(status)};
+	return false;
+}
+
+std::vector<util::Path> GpuCrashTracker::GetCrashDumpFiles() const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
-	return m_crashDumpInfos;
+	return m_crashDumpFiles;
 }
 
 // Handler for shader debug information callbacks
@@ -174,7 +201,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 
 	// Write the crash dump data to a file using the .nv-gpudmp extension
 	// registered with Nsight Graphics.
-	auto relPath = util::Path::CreatePath("temp/nsight_aftermath/");
+	auto relPath = util::Path::CreatePath(OUTPUT_PATH);
 	filemanager::create_path(relPath.GetString());
 	relPath = util::FilePath(relPath, baseFileName + ".nv-gpudmp");
 
@@ -206,18 +233,22 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 	// Destroy the GPU crash dump decoder object.
 	AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GpuCrashDump_DestroyDecoder(decoder));
 
-	m_crashDumpInfos.push_back({relPath, jsonFilePath});
+	m_crashDumpFiles.push_back(relPath);
+	m_crashDumpFiles.push_back(jsonFilePath);
 }
 
 // Helper for writing shader debug information to a file
 void GpuCrashTracker::WriteShaderDebugInformationToFile(GFSDK_Aftermath_ShaderDebugInfoIdentifier identifier, const void *pShaderDebugInfo, const uint32_t shaderDebugInfoSize)
 {
-	// Create a unique file name.
-	const std::string filePath = "shader-" + std::to_string(identifier) + ".nvdbg";
+	auto relPath = util::FilePath(OUTPUT_PATH, "shader-" + std::to_string(identifier) + ".nvdbg");
+	filemanager::create_path(relPath.GetPath());
 
-	std::ofstream f(filePath, std::ios::out | std::ios::binary);
+	auto absPath = util::FilePath(util::get_program_path(), relPath);
+
+	std::ofstream f(absPath.GetString(), std::ios::out | std::ios::binary);
 	if(f) {
 		f.write((const char *)pShaderDebugInfo, shaderDebugInfoSize);
+		m_crashDumpFiles.push_back(relPath);
 	}
 }
 
@@ -246,7 +277,6 @@ void GpuCrashTracker::OnShaderDebugInfoLookup(const GFSDK_Aftermath_ShaderDebugI
 // shader binaries.
 void GpuCrashTracker::OnShaderLookup(const GFSDK_Aftermath_ShaderBinaryHash &shaderHash, PFN_GFSDK_Aftermath_SetData setShaderBinary) const
 {
-#ifdef NSIGHT_ENABLE_SHADER_DATABASE
 	// Find shader binary data for the shader hash in the shader database.
 	std::vector<uint8_t> shaderBinary;
 	if(!m_shaderDatabase.FindShaderBinary(shaderHash, shaderBinary)) {
@@ -257,7 +287,6 @@ void GpuCrashTracker::OnShaderLookup(const GFSDK_Aftermath_ShaderBinaryHash &sha
 	// Let the GPU crash dump decoder know about the shader data
 	// that was found.
 	setShaderBinary(shaderBinary.data(), uint32_t(shaderBinary.size()));
-#endif
 }
 
 // Handler for shader source debug info lookup callbacks.
@@ -266,7 +295,6 @@ void GpuCrashTracker::OnShaderLookup(const GFSDK_Aftermath_ShaderBinaryHash &sha
 // separate debug info data files.
 void GpuCrashTracker::OnShaderSourceDebugInfoLookup(const GFSDK_Aftermath_ShaderDebugName &shaderDebugName, PFN_GFSDK_Aftermath_SetData setShaderBinary) const
 {
-#ifdef NSIGHT_ENABLE_SHADER_DATABASE
 	// Find source debug info for the shader DebugName in the shader database.
 	std::vector<uint8_t> shaderBinary;
 	if(!m_shaderDatabase.FindShaderBinaryWithDebugData(shaderDebugName, shaderBinary)) {
@@ -277,7 +305,6 @@ void GpuCrashTracker::OnShaderSourceDebugInfoLookup(const GFSDK_Aftermath_Shader
 	// Let the GPU crash dump decoder know about the shader debug data that was
 	// found.
 	setShaderBinary(shaderBinary.data(), uint32_t(shaderBinary.size()));
-#endif
 }
 
 // Static callback wrapper for OnCrashDump
@@ -331,11 +358,18 @@ void GpuCrashTracker::ShaderSourceDebugInfoLookupCallback(const GFSDK_Aftermath_
 
 static std::unique_ptr<GpuCrashTracker::MarkerMap> markerMap {};
 static std::unique_ptr<GpuCrashTracker> tracker {};
+void release_gpu_crash_tracker();
 void initialize_gpu_crash_tracker()
 {
 	markerMap = std::make_unique<GpuCrashTracker::MarkerMap>();
 	tracker = std::make_unique<GpuCrashTracker>(*markerMap);
-	tracker->Initialize();
+	try {
+		tracker->Initialize();
+	}
+	catch(const std::runtime_error &e) {
+		Con::cerr << "Failed to initialize GPU crash tracker: " << e.what() << Con::endl;
+		release_gpu_crash_tracker();
+	}
 }
 void release_gpu_crash_tracker()
 {

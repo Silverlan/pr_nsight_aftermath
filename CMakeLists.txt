@@ -17,5 +17,6 @@ pr_add_headers(${PROJ_NAME} "include/")
 pr_add_sources(${PROJ_NAME} "src/")
 
 pr_add_external_dependency(${PROJ_NAME} nsight_aftermath LIBRARY PRIVATE)
+pr_add_external_dependency(${PROJ_NAME} vulkan HEADER_ONLY)
 
 pr_finalize(${PROJ_NAME})

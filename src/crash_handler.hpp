@@ -31,60 +31,8 @@
 // #define NSIGHT_ENABLE_SHADER_DATABASE
 
 #include "pragma/clientdefinitions.h"
-#include <map>
-#include <mutex>
-#include <iomanip>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <cinttypes>
-#include <pragma/debug/debug_utils.hpp>
-#include <sharedutils/util_path.hpp>
-#include <GFSDK_Aftermath.h>
-#include <GFSDK_Aftermath_GpuCrashDump.h>
-#include <GFSDK_Aftermath_GpuCrashDumpDecoding.h>
-
-//*********************************************************
-// Some std::to_string overloads for some Nsight Aftermath
-// API types.
-//
-
-namespace std {
-	template<typename T>
-	inline std::string to_hex_string(T n)
-	{
-		std::stringstream stream;
-		stream << std::setfill('0') << std::setw(2 * sizeof(T)) << std::hex << n;
-		return stream.str();
-	}
-
-	inline std::string to_string(GFSDK_Aftermath_Result result) { return std::string("0x") + to_hex_string(static_cast<uint32_t>(result)); }
-
-	inline std::string to_string(const GFSDK_Aftermath_ShaderDebugInfoIdentifier &identifier) { return to_hex_string(identifier.id[0]) + "-" + to_hex_string(identifier.id[1]); }
-
-	inline std::string to_string(const GFSDK_Aftermath_ShaderBinaryHash &hash) { return to_hex_string(hash.hash); }
-} // namespace std
-
-inline std::string AftermathErrorMessage(GFSDK_Aftermath_Result result)
-{
-	switch(result) {
-	case GFSDK_Aftermath_Result_FAIL_DriverVersionNotSupported:
-		return "Unsupported driver version - requires an NVIDIA R495 display driver or newer.";
-	default:
-		return "Aftermath Error 0x" + std::to_hex_string(result);
-	}
-}
-
-// Helper macro for checking Nsight Aftermath results and throwing exception
-// in case of a failure.
-#define AFTERMATH_CHECK_ERROR(FC)                                                                                                                                                                                                                                                                \
-	[&]() {                                                                                                                                                                                                                                                                                      \
-		GFSDK_Aftermath_Result _result = FC;                                                                                                                                                                                                                                                     \
-		if(!GFSDK_Aftermath_SUCCEED(_result)) {                                                                                                                                                                                                                                                  \
-			pragma::debug::show_message_prompt(AftermathErrorMessage(_result), pragma::debug::MessageBoxButtons::Ok, "Aftermath Error");                                                                                                                                          \
-			exit(1);                                                                                                                                                                                                                                                                             \
-		}                                                                                                                                                                                                                                                                                        \
-	}()
+#include "nsight_aftermath.hpp"
+#include "shader_database.hpp"
 
 // Helper for comparing GFSDK_Aftermath_ShaderDebugInfoIdentifier.
 inline bool operator<(const GFSDK_Aftermath_ShaderDebugInfoIdentifier &lhs, const GFSDK_Aftermath_ShaderDebugInfoIdentifier &rhs)
@@ -101,10 +49,7 @@ inline bool operator<(const GFSDK_Aftermath_ShaderDebugInfoIdentifier &lhs, cons
 //
 class GpuCrashTracker {
   public:
-	struct CrashDumpInfo {
-		util::Path nvdbgPath;
-		util::Path jsonPath;
-	};
+	static constexpr std::string_view OUTPUT_PATH = "temp/nsight_aftermath/";
 	// keep four frames worth of marker history
 	const static unsigned int c_markerFrameHistory = 4;
 	typedef std::array<std::map<uint64_t, std::string>, c_markerFrameHistory> MarkerMap;
@@ -115,7 +60,8 @@ class GpuCrashTracker {
 	// Initialize the GPU crash dump tracker.
 	void Initialize();
 
-	std::vector<CrashDumpInfo> GetCrashDumpInfos() const;
+	bool WaitForCompletion(std::string &outErr);
+	std::vector<util::Path> GetCrashDumpFiles() const;
   private:
 	//*********************************************************
 	// Callback handlers for GPU crash dumps and related data.
@@ -192,15 +138,13 @@ class GpuCrashTracker {
 	// For thread-safe access of GPU crash tracker state.
 	mutable std::mutex m_mutex;
 
-	std::vector<CrashDumpInfo> m_crashDumpInfos;
+	std::vector<util::Path> m_crashDumpFiles;
 
 	// List of Shader Debug Information by ShaderDebugInfoIdentifier.
 	std::map<GFSDK_Aftermath_ShaderDebugInfoIdentifier, std::vector<uint8_t>> m_shaderDebugInfo;
 
 	// The mock shader database.
-#ifdef NSIGHT_ENABLE_SHADER_DATABASE
 	ShaderDatabase m_shaderDatabase;
-#endif
 
 	// App-managed marker tracking
 	const MarkerMap &m_markerMap;
