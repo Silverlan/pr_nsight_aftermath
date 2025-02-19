@@ -15,6 +15,7 @@
 #include <vulkan/vulkan.h>
 #include <pragma/debug/debug_utils.hpp>
 #include <sharedutils/util_path.hpp>
+#include <sharedutils/util_debug.h>
 #include <sharedutils/magic_enum.hpp>
 #include <GFSDK_Aftermath.h>
 #include <GFSDK_Aftermath_GpuCrashDump.h>
@@ -136,7 +137,7 @@ inline std::string AftermathErrorMessage(GFSDK_Aftermath_Result result)
 	[&]() {                                                                                                                                                                                                                                                                                      \
 		GFSDK_Aftermath_Result _result = FC;                                                                                                                                                                                                                                                     \
 		if(!GFSDK_Aftermath_SUCCEED(_result)) {                                                                                                                                                                                                                                                  \
-			pragma::debug::show_message_prompt(AftermathErrorMessage(_result), pragma::debug::MessageBoxButtons::Ok, "Aftermath Error");                                                                                                                                                         \
+			util::debug::show_message_prompt(AftermathErrorMessage(_result), util::debug::MessageBoxButtons::Ok, "Aftermath Error");                                                                                                                                                         \
 			exit(1);                                                                                                                                                                                                                                                                             \
 		}                                                                                                                                                                                                                                                                                        \
 	}()
