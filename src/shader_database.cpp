@@ -26,6 +26,7 @@
 #include <iomanip>
 
 #include "shader_database.hpp"
+#include <fsys/filesystem.h>
 #include <sharedutils/util.h>
 
 //*********************************************************
@@ -41,8 +42,10 @@ ShaderDatabase::~ShaderDatabase() {}
 
 bool ShaderDatabase::ReadFile(const char *filename, std::vector<uint8_t> &data)
 {
-	auto absFilename = util::FilePath(util::get_program_path(), filename).GetString();
-	std::ifstream fs(filename, std::ios::in | std::ios::binary);
+	std::string absFilename;
+	if(!filemanager::find_absolute_path(filename, absFilename))
+		return false;
+	std::ifstream fs(absFilename, std::ios::in | std::ios::binary);
 	if(!fs) {
 		return false;
 	}

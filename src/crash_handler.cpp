@@ -205,7 +205,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 	filemanager::create_path(relPath.GetString());
 	relPath = util::FilePath(relPath, baseFileName + ".nv-gpudmp");
 
-	auto absPath = util::FilePath(util::get_program_path(), relPath);
+	auto absPath = util::FilePath(filemanager::get_program_write_path(), relPath);
 	std::ofstream dumpFile(absPath.GetString(), std::ios::out | std::ios::binary);
 	if(dumpFile) {
 		dumpFile.write((const char *)pGpuCrashDump, gpuCrashDumpSize);
@@ -222,7 +222,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 
 	// Write the crash dump data as JSON to a file.
 	auto jsonFilePath = relPath.GetString() + ".json";
-	auto absJsonPath = util::FilePath(util::get_program_path(), jsonFilePath);
+	auto absJsonPath = util::FilePath(filemanager::get_program_write_path(), jsonFilePath);
 	std::ofstream jsonFile(absJsonPath.GetString(), std::ios::out | std::ios::binary);
 	if(jsonFile) {
 		// Write the JSON to the file (excluding string termination)
@@ -243,7 +243,7 @@ void GpuCrashTracker::WriteShaderDebugInformationToFile(GFSDK_Aftermath_ShaderDe
 	auto relPath = util::FilePath(OUTPUT_PATH, "shader-" + std::to_string(identifier) + ".nvdbg");
 	filemanager::create_path(relPath.GetPath());
 
-	auto absPath = util::FilePath(util::get_program_path(), relPath);
+	auto absPath = util::FilePath(filemanager::get_program_write_path(), relPath);
 
 	std::ofstream f(absPath.GetString(), std::ios::out | std::ios::binary);
 	if(f) {
