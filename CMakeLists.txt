@@ -16,7 +16,10 @@ pr_add_dependency(${PROJ_NAME} util_zip TARGET)
 pr_add_headers(${PROJ_NAME} "include/")
 pr_add_sources(${PROJ_NAME} "src/")
 
+find_package(nsight_aftermath REQUIRED)
 pr_add_external_dependency(${PROJ_NAME} nsight_aftermath LIBRARY PRIVATE)
-pr_add_external_dependency(${PROJ_NAME} vulkan HEADER_ONLY)
+
+find_package(vulkan REQUIRED)
+pr_add_external_dependency(${PROJ_NAME} vulkan HEADER_ONLY PRIVATE)
 
 pr_finalize(${PROJ_NAME})

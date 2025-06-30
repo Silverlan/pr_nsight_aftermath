@@ -18,10 +18,6 @@ if not Path(nsight_aftermath_root).is_dir():
 	else:
 		http_extract("https://developer.nvidia.com/downloads/assets/tools/secure/nsight-aftermath-sdk/2024_3_0/linux/NVIDIA_Nsight_Aftermath_SDK_2024.3.0.24312.tgz",format="tar.gz")
 	os.chdir(deps_dir)
-cmake_args.append("-DCONFIG_BUILD_WITH_NSIGHT_AFTERMATH_SUPPORT=1")
-cmake_args.append("-DDEPENDENCY_NSIGHT_AFTERMATH_INCLUDE=" +nsight_aftermath_root +"/include/")
 
-if platform == "win32":
-	cmake_args.append("-DDEPENDENCY_NSIGHT_AFTERMATH_LIBRARY=" +nsight_aftermath_root +"/lib/x64/GFSDK_Aftermath_Lib.x64.lib")
-else:
-	cmake_args.append("-DDEPENDENCY_NSIGHT_AFTERMATH_LIBRARY=" +nsight_aftermath_root +"/lib/x64/libGFSDK_Aftermath_Lib.x64.so")
+copy_prebuilt_binaries(nsight_aftermath_root +"/lib/x64/", "nsight_aftermath")
+copy_prebuilt_headers(nsight_aftermath_root +"/include", "nsight_aftermath")
