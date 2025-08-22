@@ -9,7 +9,7 @@
 #include <luainterface.hpp>
 
 import util_zip;
-#pragma optimize("", off)
+
 static CallbackHandle g_dumpDebugInfoHandle;
 extern "C" {
 // Called after the module has been loaded
