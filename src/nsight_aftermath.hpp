@@ -12,7 +12,6 @@
 #include <vector>
 #include <cinttypes>
 #include <vulkan/vulkan.h>
-#include <pragma/debug/debug_utils.hpp>
 #include <sharedutils/util_path.hpp>
 #include <sharedutils/util_debug.h>
 #include <sharedutils/magic_enum.hpp>

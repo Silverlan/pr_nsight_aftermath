@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "pr_module.hpp"
-#include <pragma/lua/luaapi.h>
 #include "crash_handler.hpp"
-#include <pragma/console/conout.h>
-#include <pragma/engine.h>
 #include <luainterface.hpp>
 
 import util_zip;

@@ -23,8 +23,6 @@
 //*********************************************************
 
 #include "crash_handler.hpp"
-#include <pragma/util/global_string_table.hpp>
-#include <pragma/engine_version.h>
 #include <sharedutils/util_path.hpp>
 #include <sharedutils/util.h>
 #include <fsys/filesystem.h>
@@ -32,7 +30,6 @@
 #include <iomanip>
 #include <string>
 #include <array>
-#include <pragma/console/conout.h>
 
 //*********************************************************
 // GpuCrashTracker implementation
