@@ -22,13 +22,13 @@
 //
 //*********************************************************
 
-#pragma once
+module;
 
-#include <vector>
-#include <map>
-#include <mutex>
+#include <GFSDK_Aftermath_GpuCrashDumpDecoding.h>
 
-#include "nsight_aftermath.hpp"
+export module pragma.modules.nsight_aftermath:shader_database;
+
+import :core;
 
 //*********************************************************
 // Implements a very simple shader database to help demonstrate
@@ -37,7 +37,7 @@
 // In a real world scenario this would be part of an offline
 // analysis tool. This is for demonstration purposes only!
 //
-class ShaderDatabase {
+export class ShaderDatabase {
   public:
 	ShaderDatabase();
 	~ShaderDatabase();
