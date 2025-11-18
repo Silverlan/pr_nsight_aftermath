@@ -22,12 +22,18 @@
 //
 //*********************************************************
 
-#include <fstream>
-#include <iomanip>
+module;
 
-#include "shader_database.hpp"
-#include <fsys/filesystem.h>
-#include <sharedutils/util.h>
+#include <vulkan/vulkan.h>
+#include <GFSDK_Aftermath.h>
+#include <GFSDK_Aftermath_GpuCrashDump.h>
+#include <GFSDK_Aftermath_GpuCrashDumpDecoding.h>
+#include "aftermath_assert.hpp"
+
+module pragma.modules.nsight_aftermath;
+
+import :shader_database;
+import pragma.filesystem;
 
 //*********************************************************
 // ShaderDatabase implementation

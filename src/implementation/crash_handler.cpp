@@ -22,17 +22,17 @@
 //
 //*********************************************************
 
-#include "crash_handler.hpp"
-#include <pragma/util/global_string_table.hpp>
-#include <pragma/engine_version.h>
-#include <sharedutils/util_path.hpp>
-#include <sharedutils/util.h>
-#include <fsys/filesystem.h>
-#include <fstream>
-#include <iomanip>
-#include <string>
-#include <array>
-#include <pragma/console/conout.h>
+module;
+
+#include <GFSDK_Aftermath.h>
+#include <GFSDK_Aftermath_GpuCrashDump.h>
+#include <GFSDK_Aftermath_GpuCrashDumpDecoding.h>
+#include "aftermath_assert.hpp"
+
+module pragma.modules.nsight_aftermath;
+
+import :crash_handler;
+import pragma.shared;
 
 //*********************************************************
 // GpuCrashTracker implementation

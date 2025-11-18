@@ -1,19 +1,14 @@
 // SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 // SPDX-License-Identifier: MIT
 
-#include "pr_module.hpp"
-#include <pragma/lua/luaapi.h>
-#include "crash_handler.hpp"
-#include <pragma/console/conout.h>
-#include <pragma/engine.h>
-#include <luainterface.hpp>
-
+import pragma.modules.nsight_aftermath;
+import pragma.shared;
 import util_zip;
 
 static CallbackHandle g_dumpDebugInfoHandle;
 extern "C" {
 // Called after the module has been loaded
-DLLEXPORT bool pragma_attach(std::string &outErr)
+PR_EXPORT bool pragma_attach(std::string &outErr)
 {
 	initialize_gpu_crash_tracker();
 	g_dumpDebugInfoHandle = pragma::get_engine()->AddCallback("DumpDebugInformation", FunctionCallback<void, std::reference_wrapper<uzip::ZIPFile>>::Create([](std::reference_wrapper<uzip::ZIPFile> zipFile) {
@@ -43,7 +38,7 @@ DLLEXPORT bool pragma_attach(std::string &outErr)
 }
 
 // Called when the module is about to be unloaded
-DLLEXPORT void pragma_detach()
+PR_EXPORT void pragma_detach()
 {
 	if(g_dumpDebugInfoHandle.IsValid())
 		g_dumpDebugInfoHandle.Remove();
