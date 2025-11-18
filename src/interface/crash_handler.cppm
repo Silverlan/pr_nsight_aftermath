@@ -53,7 +53,7 @@ export {
 	// Aftermath API.
 	//
 	class GpuCrashTracker {
-	public:
+	  public:
 		static constexpr std::string_view OUTPUT_PATH = "temp/nsight_aftermath/";
 		// keep four frames worth of marker history
 		const static unsigned int c_markerFrameHistory = 4;
@@ -67,7 +67,7 @@ export {
 
 		bool WaitForCompletion(std::string &outErr);
 		std::vector<util::Path> GetCrashDumpFiles() const;
-	private:
+	  private:
 		//*********************************************************
 		// Callback handlers for GPU crash dumps and related data.
 		//
