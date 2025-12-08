@@ -145,7 +145,7 @@ void GpuCrashTracker::OnDescription(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescripti
 	// Add some basic description about the crash. This is called after the GPU crash happens, but before
 	// the actual GPU crash dump callback. The provided data is included in the crash dump and can be
 	// retrieved using GFSDK_Aftermath_GpuCrashDump_GetDescription().
-	auto version = get_pretty_engine_version();
+	auto version = pragma::get_pretty_engine_version();
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationName, pragma::register_global_string(util::get_program_name()));
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationVersion, pragma::register_global_string(version));
 	// addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_UserDefined, "This is a GPU crash dump example.");
