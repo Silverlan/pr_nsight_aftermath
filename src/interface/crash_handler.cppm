@@ -66,7 +66,7 @@ export {
 		void Initialize();
 
 		bool WaitForCompletion(std::string &outErr);
-		std::vector<util::Path> GetCrashDumpFiles() const;
+		std::vector<pragma::util::Path> GetCrashDumpFiles() const;
 	  private:
 		//*********************************************************
 		// Callback handlers for GPU crash dumps and related data.
@@ -143,7 +143,7 @@ export {
 		// For thread-safe access of GPU crash tracker state.
 		mutable std::mutex m_mutex;
 
-		std::vector<util::Path> m_crashDumpFiles;
+		std::vector<pragma::util::Path> m_crashDumpFiles;
 
 		// List of Shader Debug Information by ShaderDebugInfoIdentifier.
 		std::map<GFSDK_Aftermath_ShaderDebugInfoIdentifier, std::vector<uint8_t>> m_shaderDebugInfo;

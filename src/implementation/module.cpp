@@ -22,7 +22,7 @@ PR_EXPORT bool pragma_attach(std::string &outErr)
 			Con::cerr << "Failed to wait for GPU crash dump completion: " << err << Con::endl;
 		auto files = tracker->GetCrashDumpFiles();
 		for(auto &filePath : files) {
-			auto f = filemanager::open_file<VFilePtrReal>(filePath.GetString(), filemanager::FileMode::Read | filemanager::FileMode::Binary);
+			auto f = pragma::fs::open_file<pragma::fs::VFilePtrReal>(filePath.GetString(), pragma::fs::FileMode::Read | pragma::fs::FileMode::Binary);
 			if(f) {
 				std::vector<uint8_t> data;
 				data.resize(f->GetSize());
@@ -31,7 +31,7 @@ PR_EXPORT bool pragma_attach(std::string &outErr)
 			}
 			f = {};
 			// We don't need the files anymore
-			filemanager::remove_file(filePath.GetString());
+			pragma::fs::remove_file(filePath.GetString());
 		}
 	}));
 	return true;

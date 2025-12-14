@@ -49,7 +49,7 @@ ShaderDatabase::~ShaderDatabase() {}
 bool ShaderDatabase::ReadFile(const char *filename, std::vector<uint8_t> &data)
 {
 	std::string absFilename;
-	if(!filemanager::find_absolute_path(filename, absFilename))
+	if(!pragma::fs::find_absolute_path(filename, absFilename))
 		return false;
 	std::ifstream fs(absFilename, std::ios::in | std::ios::binary);
 	if(!fs) {

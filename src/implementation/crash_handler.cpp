@@ -114,7 +114,7 @@ bool GpuCrashTracker::WaitForCompletion(std::string &outErr)
 	return false;
 }
 
-std::vector<util::Path> GpuCrashTracker::GetCrashDumpFiles() const
+std::vector<pragma::util::Path> GpuCrashTracker::GetCrashDumpFiles() const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_crashDumpFiles;
@@ -146,7 +146,7 @@ void GpuCrashTracker::OnDescription(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescripti
 	// the actual GPU crash dump callback. The provided data is included in the crash dump and can be
 	// retrieved using GFSDK_Aftermath_GpuCrashDump_GetDescription().
 	auto version = pragma::get_pretty_engine_version();
-	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationName, pragma::register_global_string(util::get_program_name()));
+	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationName, pragma::register_global_string(pragma::util::get_program_name()));
 	addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_ApplicationVersion, pragma::register_global_string(version));
 	// addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_UserDefined, "This is a GPU crash dump example.");
 	// addDescription(GFSDK_Aftermath_GpuCrashDumpDescriptionKey_UserDefined + 1, "Engine State: Rendering.");
@@ -201,11 +201,11 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 
 	// Write the crash dump data to a file using the .nv-gpudmp extension
 	// registered with Nsight Graphics.
-	auto relPath = util::Path::CreatePath(OUTPUT_PATH);
-	filemanager::create_path(relPath.GetString());
-	relPath = util::FilePath(relPath, baseFileName + ".nv-gpudmp");
+	auto relPath = pragma::util::Path::CreatePath(OUTPUT_PATH);
+	pragma::fs::create_path(relPath.GetString());
+	relPath = pragma::util::FilePath(relPath, baseFileName + ".nv-gpudmp");
 
-	auto absPath = util::FilePath(filemanager::get_program_write_path(), relPath);
+	auto absPath = pragma::util::FilePath(pragma::fs::get_program_write_path(), relPath);
 	std::ofstream dumpFile(absPath.GetString(), std::ios::out | std::ios::binary);
 	if(dumpFile) {
 		dumpFile.write((const char *)pGpuCrashDump, gpuCrashDumpSize);
@@ -222,7 +222,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 
 	// Write the crash dump data as JSON to a file.
 	auto jsonFilePath = relPath.GetString() + ".json";
-	auto absJsonPath = util::FilePath(filemanager::get_program_write_path(), jsonFilePath);
+	auto absJsonPath = pragma::util::FilePath(pragma::fs::get_program_write_path(), jsonFilePath);
 	std::ofstream jsonFile(absJsonPath.GetString(), std::ios::out | std::ios::binary);
 	if(jsonFile) {
 		// Write the JSON to the file (excluding string termination)
@@ -240,10 +240,10 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 // Helper for writing shader debug information to a file
 void GpuCrashTracker::WriteShaderDebugInformationToFile(GFSDK_Aftermath_ShaderDebugInfoIdentifier identifier, const void *pShaderDebugInfo, const uint32_t shaderDebugInfoSize)
 {
-	auto relPath = util::FilePath(OUTPUT_PATH, "shader-" + std::to_string(identifier) + ".nvdbg");
-	filemanager::create_path(relPath.GetPath());
+	auto relPath = pragma::util::FilePath(OUTPUT_PATH, "shader-" + std::to_string(identifier) + ".nvdbg");
+	pragma::fs::create_path(relPath.GetPath());
 
-	auto absPath = util::FilePath(filemanager::get_program_write_path(), relPath);
+	auto absPath = pragma::util::FilePath(pragma::fs::get_program_write_path(), relPath);
 
 	std::ofstream f(absPath.GetString(), std::ios::out | std::ios::binary);
 	if(f) {
