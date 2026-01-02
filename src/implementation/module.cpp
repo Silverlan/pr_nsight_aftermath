@@ -27,7 +27,7 @@ PR_EXPORT bool pragma_attach(std::string &outErr)
 				std::vector<uint8_t> data;
 				data.resize(f->GetSize());
 				f->Read(data.data(), data.size());
-				zipFile.get().AddFile(std::string {filePath.GetFileName()}, data.data(), data.size());
+				pragma::util::add_file_to_zip_archive(zipFile.get(), std::string {filePath.GetFileName()}, data.data(), data.size());
 			}
 			f = {};
 			// We don't need the files anymore
