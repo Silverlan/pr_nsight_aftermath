@@ -367,7 +367,7 @@ void initialize_gpu_crash_tracker()
 		tracker->Initialize();
 	}
 	catch(const std::runtime_error &e) {
-		Con::cerr << "Failed to initialize GPU crash tracker: " << e.what() << Con::endl;
+		Con::CERR << "Failed to initialize GPU crash tracker: " << e.what() << Con::endl;
 		release_gpu_crash_tracker();
 	}
 }

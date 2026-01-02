@@ -19,7 +19,7 @@ PR_EXPORT bool pragma_attach(std::string &outErr)
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 		std::string err;
 		if(!tracker->WaitForCompletion(err))
-			Con::cerr << "Failed to wait for GPU crash dump completion: " << err << Con::endl;
+			Con::CERR << "Failed to wait for GPU crash dump completion: " << err << Con::endl;
 		auto files = tracker->GetCrashDumpFiles();
 		for(auto &filePath : files) {
 			auto f = pragma::fs::open_file<pragma::fs::VFilePtrReal>(filePath.GetString(), pragma::fs::FileMode::Read | pragma::fs::FileMode::Binary);
