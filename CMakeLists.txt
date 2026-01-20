@@ -3,7 +3,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/pr_common.cmake)
 set(PROJ_NAME pr_nsight_aftermath)
 set(MODULE_TYPE client)
 
-pr_add_module(${PROJ_NAME} SHARED "modules/nsight_aftermath/")
+pr_add_module(${PROJ_NAME} "modules/nsight_aftermath/")
 
 pr_add_dependency(${PROJ_NAME} shared TARGET PUBLIC)
 if("${MODULE_TYPE}" STREQUAL "client")
