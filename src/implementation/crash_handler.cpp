@@ -197,7 +197,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void *pGpuCrashDump, const u
 	// driver release) we may see redundant crash dumps. As a workaround,
 	// attach a unique count to each generated file name.
 	static int count = 0;
-	const std::string baseFileName = std::string(applicationName.data()) + "-" + std::to_string(baseInfo.pid) + "-" + std::to_string(++count);
+	const std::string baseFileName = std::string(applicationName.data()) + "-" + pragma::util::to_string(baseInfo.pid) + "-" + pragma::util::to_string(++count);
 
 	// Write the crash dump data to a file using the .nv-gpudmp extension
 	// registered with Nsight Graphics.
